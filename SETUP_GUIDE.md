@@ -1,6 +1,8 @@
-# 🛠️ Complete Setup Guide - Amazon Polly Edition
+# 🛠️ Complete Setup Guide - ElevenLabs Edition
 
-This guide walks you through setting up the News Video Agent with Amazon Polly TTS.
+This guide walks you through setting up the News Video Agent with ElevenLabs TTS.
+
+**Best part: NO CREDIT CARD NEEDED!** 🎉
 
 ## Step 1: Get Your API Keys
 
@@ -12,40 +14,35 @@ This guide walks you through setting up the News Video Agent with Amazon Polly T
 4. You'll see your API key on the dashboard
 5. Copy and save it (you'll need it in Step 4)
 
-### 1.2 Amazon Polly TTS (NEW - EASIER!)
+### 1.2 ElevenLabs API Key (NO CREDIT CARD!)
 
-Amazon Polly is much easier to set up than Google Cloud!
+ElevenLabs is perfect because it needs **no credit card at all**!
 
-#### Step 1: Create AWS Account
+#### Step 1: Sign Up (Free)
 
-1. Go to **https://aws.amazon.com**
-2. Click **"Create AWS Account"** (top right)
-3. Fill in:
-   - Email address
-   - Password
-   - AWS account name
-4. Click **"Create Account and Continue"**
-5. Verify your email address
-6. Add payment method (required, but won't charge for free tier)
+1. Go to **https://elevenlabs.io**
+2. Click **"Sign Up"** (top right)
+3. Enter your email and password
+4. **NO CREDIT CARD REQUIRED!** ✅
+5. Verify your email
+6. Done!
 
-#### Step 2: Get AWS Credentials
+#### Step 2: Get Your API Key
 
-1. Log in to **AWS Console**: https://console.aws.amazon.com
-2. Click your **account name** (top right)
-3. Select **"Security Credentials"**
-4. Go to **"Access Keys"** section
-5. Click **"Create New Access Key"**
-6. **Download the CSV file** - contains:
-   - Access Key ID
-   - Secret Access Key
-7. **Save this file safely** (you'll need it in Step 4)
+1. Log in to ElevenLabs dashboard
+2. Click your **profile icon** (top right)
+3. Go to **"Account"** or **"Profile Settings"**
+4. Find **"API Key"** section
+5. Click **"Show API Key"** or **"Copy"**
+6. Save it safely (you'll need it in Step 4)
 
-#### Step 3: Verify Polly is Available
+#### Step 3: Check Free Tier
 
-1. In AWS Console, search for **"Polly"**
-2. Go to **"Polly"** service
-3. You should see the dashboard (no additional setup needed!)
-4. Polly is **free tier**: 5 million characters per month
+Your free account includes:
+- ✅ **10,000 characters per month** (completely free!)
+- ✅ Perfect for 3-5 videos per day
+- ✅ High-quality British English voices
+- ✅ No limits, no credit card needed!
 
 ---
 
@@ -142,52 +139,19 @@ cp .env.example .env
 
 Open `.env` in a text editor (Notepad, VSCode, etc.):
 
-#### Option A: Using AWS Credentials (Easier)
-
-Add your AWS credentials directly to `.env`:
-
 ```env
-# Required: Your APIs
+# REQUIRED: Your APIs
 NEWS_API_KEY=your_newsapi_key_here
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 
-# AWS Credentials (from the CSV file you downloaded)
-AWS_ACCESS_KEY_ID=AKIA3XXXXXXXXX
-AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxx
-AWS_DEFAULT_REGION=us-east-1
-
-# TTS Settings (keep defaults)
-TTS_VOICE_ID=Amy
-TTS_LANGUAGE_CODE=en-GB
-TTS_ENGINE=neural
-
-# Video settings (optional - keep as default)
+# Optional settings (keep as default)
 VIDEOS_PER_DAY=3
 SCHEDULE_TIME=09:00
 ```
 
 **Where to find these values:**
-- `NEWS_API_KEY`: From NewsAPI website
-- `AWS_ACCESS_KEY_ID` & `AWS_SECRET_ACCESS_KEY`: From the CSV file you downloaded
-- `AWS_DEFAULT_REGION`: Usually `us-east-1`
-
-#### Option B: Using AWS CLI Configuration (Recommended for Production)
-
-If you want to use the AWS CLI config file instead:
-
-1. **Install AWS CLI**: https://aws.amazon.com/cli/
-2. **Configure credentials**:
-```bash
-aws configure
-```
-Then just leave the AWS settings blank in `.env`:
-```env
-NEWS_API_KEY=your_newsapi_key_here
-
-# Leave these blank if using AWS CLI credentials file
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_DEFAULT_REGION=us-east-1
-```
+- `NEWS_API_KEY`: From NewsAPI website (Step 1.1)
+- `ELEVENLABS_API_KEY`: From ElevenLabs dashboard (Step 1.2)
 
 ### 4.3 Verify Configuration
 
@@ -212,22 +176,14 @@ for article in articles:
 "
 ```
 
-### 5.2 Test Text-to-Speech with Amazon Polly
+### 5.2 Test ElevenLabs Connection
 
 ```bash
 python -c "
 from text_to_speech import TextToSpeech
-from config import TEMP_DIR
-import os
-
-print('Initializing Amazon Polly...')
+print('Testing ElevenLabs TTS...')
 tts = TextToSpeech()
-print('✓ Polly initialized successfully!')
-
-print('Available British English voices:')
-voices = TextToSpeech.get_available_voices()
-for voice_id, info in voices.items():
-    print(f'  - {voice_id}: {info[\"Name\"]} ({info[\"Gender\"]})')
+print('✓ Connected to ElevenLabs successfully!')
 "
 ```
 
@@ -244,11 +200,9 @@ test_file = os.path.join(TEMP_DIR, 'test.mp3')
 result = tts.synthesize_speech('This is a test of the text to speech system.', test_file)
 if result:
     print(f'✓ TTS test successful!')
-    print(f'✓ Audio file: {test_file}')
-    duration = tts.get_audio_duration(test_file)
-    print(f'✓ Duration: {duration:.1f} seconds')
+    print(f'✓ Audio file created: {test_file}')
 else:
-    print('✗ TTS test failed - check AWS credentials')
+    print('✗ TTS test failed - check API key')
 "
 ```
 
@@ -261,7 +215,7 @@ python main.py test
 This will:
 1. Fetch 1 trending article
 2. Process it
-3. Generate TTS audio using Amazon Polly
+3. Generate TTS audio using ElevenLabs
 4. Create a video
 5. Show results
 
@@ -271,7 +225,6 @@ INFO - Processing article: [Article Title]
 INFO - Generating text-to-speech audio...
 ✓ Audio generated: ./temp/audio_*.mp3
 INFO - Generating video...
-INFO - Uploading to social media platforms...
 ✓ Article processed successfully: ./output/videos/video_*.mp4
 ```
 
@@ -313,8 +266,8 @@ tail -f logs/agent_20240107.log
 # View errors only
 grep ERROR logs/agent_20240107.log
 
-# View Polly TTS logs
-grep "Polly\|Audio generated" logs/agent_20240107.log
+# View ElevenLabs logs
+grep "ElevenLabs\|Audio generated" logs/agent_20240107.log
 ```
 
 ### 7.2 Check Output Videos
@@ -327,14 +280,20 @@ ls -la output/videos/
 
 Each video file is named: `video_YYYYMMDD_HHMMSS.mp4`
 
-### 7.3 Common Issues and Solutions
+### 7.3 Check ElevenLabs Usage
+
+1. Log in to https://elevenlabs.io
+2. Go to **Account** or **Profile Settings**
+3. Check **"Usage"** or **"Characters Used This Month"**
+4. Your free tier shows: Characters used / 10,000
+
+### 7.4 Common Issues and Solutions
 
 | Problem | Solution |
 |---------|----------|
-| **"Unable to locate credentials"** | Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env or AWS CLI config |
-| **"InvalidParameterException"** | Text is invalid or too long - check article content |
-| **"AccessDenied"** | AWS credentials are wrong or don't have Polly permissions |
-| **"No module named boto3"** | Run `pip install -r requirements.txt` again |
+| **"Invalid ElevenLabs API key"** | Check ELEVENLABS_API_KEY in .env is correct |
+| **"Free tier limit reached"** | Upgraded to paid plan or wait for next month |
+| **"No module named requests"** | Run `pip install -r requirements.txt` again |
 | **"ffmpeg not found"** | Install FFmpeg and add to PATH |
 | **"Permission denied"** | Make sure you have write access to the directory |
 
@@ -398,21 +357,22 @@ to generate your first videos!
 
 ---
 
-## 💡 Amazon Polly Voice Options
+## 💡 ElevenLabs Features
 
-Available British English voices:
+### Free Tier Includes:
+- ✅ **10,000 characters per month** (completely free!)
+- ✅ **100+ voices** in 30+ languages
+- ✅ **British English voices** (Victoria, Amy, etc.)
+- ✅ **High quality** - professional sound
+- ✅ **No credit card required**
+- ✅ **No hidden fees**
 
-| Voice ID | Name | Gender | Quality |
-|----------|------|--------|---------|
-| **Amy** | Amy | Female | Neural (Best) |
-| **Brian** | Brian | Male | Neural (Best) |
-| **Emma** | Emma | Female | Standard |
-| **Arthur** | Arthur | Male | Neural (Very Good) |
-| **Olivia** | Olivia | Female | Neural (Excellent) |
-
-**Recommended**: `Amy` (default) - Professional British female voice
-
-To use a different voice, change `TTS_VOICE_ID` in `.env`
+### Usage Estimate for Your Agent:
+- ~200 chars per video
+- 3-5 videos per day = 1,000 chars/day
+- ~30,000 chars/month
+- **Free tier (10,000 chars/month) is perfect for testing!**
+- When you're ready to scale, you can upgrade
 
 ---
 
@@ -420,20 +380,19 @@ To use a different voice, change `TTS_VOICE_ID` in `.env`
 
 If you encounter issues:
 
-1. **Check AWS Credentials** - Ensure they're in `.env` or AWS CLI config
-2. **Check logs** - Look in `logs/` directory for details
-3. **Verify AWS account** - Make sure Polly is available in your region
+1. **Check API Key** - Ensure ELEVENLABS_API_KEY in .env is correct
+2. **Check Usage** - Log in to ElevenLabs to verify free tier usage
+3. **Check logs** - Look in `logs/` directory for details
 4. **Test components** - Run individual tests from Step 5
-5. **Check GitHub Issues** - See if others had the same problem
+5. **Check internet** - Make sure you have internet connection for API calls
 
 ---
 
 ## 🎓 Learning Resources
 
 - **Python**: https://www.learnpython.org
-- **Amazon Polly**: https://aws.amazon.com/polly/
+- **ElevenLabs**: https://elevenlabs.io/docs
 - **NewsAPI**: https://newsapi.org/docs
-- **AWS CLI**: https://aws.amazon.com/cli/
 - **TikTok API**: https://developer.tiktok.com/doc/
 - **WeChat API**: https://developers.weixin.qq.com/doc
 
@@ -441,11 +400,16 @@ If you encounter issues:
 
 ## 🚀 Next Steps
 
-1. ✅ Create AWS account
-2. ✅ Get credentials
-3. ✅ Follow this guide step-by-step
-4. ✅ Test with `python main.py test`
-5. ✅ Generate videos with `python main.py once`
-6. ✅ Deploy to run daily
+1. ✅ Sign up to ElevenLabs (https://elevenlabs.io) - NO CREDIT CARD!
+2. ✅ Get your API key
+3. ✅ Get your NewsAPI key
+4. ✅ Follow this guide step-by-step
+5. ✅ Test with `python main.py test`
+6. ✅ Generate videos with `python main.py once`
+7. ✅ Deploy to run daily
 
-Happy coding! 🎬📱✨
+---
+
+**Happy coding! Your journey to creating amazing short-form videos starts now!** 🎬📱✨
+
+**Questions?** Check the troubleshooting section or visit ElevenLabs documentation!
