@@ -1,6 +1,6 @@
-# 🛠️ Complete Setup Guide
+# 🛠️ Complete Setup Guide - Amazon Polly Edition
 
-This guide walks you through setting up the News Video Agent from scratch.
+This guide walks you through setting up the News Video Agent with Amazon Polly TTS.
 
 ## Step 1: Get Your API Keys
 
@@ -10,52 +10,44 @@ This guide walks you through setting up the News Video Agent from scratch.
 2. Create a free account with your email
 3. Verify your email
 4. You'll see your API key on the dashboard
-5. Copy the API key
+5. Copy and save it (you'll need it in Step 4)
 
-### 1.2 Google Cloud Text-to-Speech
+### 1.2 Amazon Polly TTS (NEW - EASIER!)
 
-1. Go to **https://console.cloud.google.com**
-2. Create a new project (or select existing)
-3. Enable "Cloud Text-to-Speech API":
-   - Search for "Text-to-Speech"
-   - Click "Enable"
-4. Create Service Account:
-   - Go to "Service Accounts" in left menu
-   - Click "Create Service Account"
-   - Name: `news-video-agent`
-   - Click "Create and Continue"
-5. Grant Permissions:
-   - Role: "Cloud Text-to-Speech API User"
-   - Click "Continue" then "Done"
-6. Create Key:
-   - Click on service account name
-   - Go to "Keys" tab
-   - Click "Add Key" > "Create new key"
-   - Select "JSON"
-   - Download the JSON file
-   - Save to a safe location (e.g., `~/credentials/gcloud-tts.json`)
+Amazon Polly is much easier to set up than Google Cloud!
 
-### 1.3 TikTok API (Optional)
+#### Step 1: Create AWS Account
 
-> **Note**: TikTok API requires a business account and special approval
+1. Go to **https://aws.amazon.com**
+2. Click **"Create AWS Account"** (top right)
+3. Fill in:
+   - Email address
+   - Password
+   - AWS account name
+4. Click **"Create Account and Continue"**
+5. Verify your email address
+6. Add payment method (required, but won't charge for free tier)
 
-1. Go to **https://developer.tiktok.com**
-2. Sign in with TikTok account
-3. Apply for developer access
-4. Create an application
-5. Get OAuth credentials after approval
-6. Copy your access token
+#### Step 2: Get AWS Credentials
 
-### 1.4 WeChat Official Account (Optional)
+1. Log in to **AWS Console**: https://console.aws.amazon.com
+2. Click your **account name** (top right)
+3. Select **"Security Credentials"**
+4. Go to **"Access Keys"** section
+5. Click **"Create New Access Key"**
+6. **Download the CSV file** - contains:
+   - Access Key ID
+   - Secret Access Key
+7. **Save this file safely** (you'll need it in Step 4)
 
-> **Note**: WeChat requires a registered official account (服务号 or 订阅号)
+#### Step 3: Verify Polly is Available
 
-1. Register at **https://mp.weixin.qq.com**
-2. Get to "Settings" > "Account Information"
-3. Find "API Credentials" or similar
-4. Copy:
-   - AppID
-   - AppSecret (or Access Token if available)
+1. In AWS Console, search for **"Polly"**
+2. Go to **"Polly"** service
+3. You should see the dashboard (no additional setup needed!)
+4. Polly is **free tier**: 5 million characters per month
+
+---
 
 ## Step 2: Set Up Your Computer
 
@@ -102,6 +94,8 @@ brew install imagemagick
 sudo apt-get install imagemagick
 ```
 
+---
+
 ## Step 3: Clone and Setup Repository
 
 ### 3.1 Clone Repository
@@ -134,6 +128,8 @@ pip install -r requirements.txt
 
 This may take a few minutes the first time.
 
+---
+
 ## Step 4: Configure Environment
 
 ### 4.1 Copy Example Configuration
@@ -146,33 +142,60 @@ cp .env.example .env
 
 Open `.env` in a text editor (Notepad, VSCode, etc.):
 
+#### Option A: Using AWS Credentials (Easier)
+
+Add your AWS credentials directly to `.env`:
+
 ```env
-# REQUIRED: Your APIs
-NEWS_API_KEY=paste_your_newsapi_key_here
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/google-credentials.json
+# Required: Your APIs
+NEWS_API_KEY=your_newsapi_key_here
 
-# OPTIONAL: For social media uploads
-TIKTOK_ACCESS_TOKEN=your_tiktok_token
-WECHAT_ACCESS_TOKEN=your_wechat_token
+# AWS Credentials (from the CSV file you downloaded)
+AWS_ACCESS_KEY_ID=AKIA3XXXXXXXXX
+AWS_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxx
+AWS_DEFAULT_REGION=us-east-1
 
-# Configuration (keep as default unless you know what you're doing)
+# TTS Settings (keep defaults)
+TTS_VOICE_ID=Amy
+TTS_LANGUAGE_CODE=en-GB
+TTS_ENGINE=neural
+
+# Video settings (optional - keep as default)
 VIDEOS_PER_DAY=3
 SCHEDULE_TIME=09:00
-VIDEO_WIDTH=1080
-VIDEO_HEIGHT=1920
-TTS_LANGUAGE_CODE=en-GB
-TTS_VOICE_NAME=en-GB-Standard-B
 ```
 
-**Important**: 
-- Replace `paste_your_newsapi_key_here` with your actual NewsAPI key
-- Replace `/path/to/google-credentials.json` with the actual path to your downloaded JSON file (e.g., `C:\Users\YourName\credentials\gcloud-tts.json` on Windows)
+**Where to find these values:**
+- `NEWS_API_KEY`: From NewsAPI website
+- `AWS_ACCESS_KEY_ID` & `AWS_SECRET_ACCESS_KEY`: From the CSV file you downloaded
+- `AWS_DEFAULT_REGION`: Usually `us-east-1`
+
+#### Option B: Using AWS CLI Configuration (Recommended for Production)
+
+If you want to use the AWS CLI config file instead:
+
+1. **Install AWS CLI**: https://aws.amazon.com/cli/
+2. **Configure credentials**:
+```bash
+aws configure
+```
+Then just leave the AWS settings blank in `.env`:
+```env
+NEWS_API_KEY=your_newsapi_key_here
+
+# Leave these blank if using AWS CLI credentials file
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+```
 
 ### 4.3 Verify Configuration
 
 ```bash
 python -c "from config import *; print('✓ Configuration loaded successfully')"
 ```
+
+---
 
 ## Step 5: Test the Agent
 
@@ -189,7 +212,26 @@ for article in articles:
 "
 ```
 
-### 5.2 Test Text-to-Speech
+### 5.2 Test Text-to-Speech with Amazon Polly
+
+```bash
+python -c "
+from text_to_speech import TextToSpeech
+from config import TEMP_DIR
+import os
+
+print('Initializing Amazon Polly...')
+tts = TextToSpeech()
+print('✓ Polly initialized successfully!')
+
+print('Available British English voices:')
+voices = TextToSpeech.get_available_voices()
+for voice_id, info in voices.items():
+    print(f'  - {voice_id}: {info[\"Name\"]} ({info[\"Gender\"]})')
+"
+```
+
+### 5.3 Test Audio Generation
 
 ```bash
 python -c "
@@ -200,10 +242,17 @@ import os
 tts = TextToSpeech()
 test_file = os.path.join(TEMP_DIR, 'test.mp3')
 result = tts.synthesize_speech('This is a test of the text to speech system.', test_file)
-print(f'✓ TTS test: {\"Success\" if result else \"Failed\"}')"
+if result:
+    print(f'✓ TTS test successful!')
+    print(f'✓ Audio file: {test_file}')
+    duration = tts.get_audio_duration(test_file)
+    print(f'✓ Duration: {duration:.1f} seconds')
+else:
+    print('✗ TTS test failed - check AWS credentials')
+"
 ```
 
-### 5.3 Test Full Pipeline
+### 5.4 Test Full Pipeline
 
 ```bash
 python main.py test
@@ -212,7 +261,7 @@ python main.py test
 This will:
 1. Fetch 1 trending article
 2. Process it
-3. Generate TTS audio
+3. Generate TTS audio using Amazon Polly
 4. Create a video
 5. Show results
 
@@ -220,10 +269,13 @@ Expected output:
 ```
 INFO - Processing article: [Article Title]
 INFO - Generating text-to-speech audio...
+✓ Audio generated: ./temp/audio_*.mp3
 INFO - Generating video...
 INFO - Uploading to social media platforms...
-✓ Article processed successfully: ./output/videos/video_YYYYMMDD_HHMMSS.mp4
+✓ Article processed successfully: ./output/videos/video_*.mp4
 ```
+
+---
 
 ## Step 6: Run the Agent
 
@@ -248,6 +300,8 @@ This will:
 
 Press `Ctrl+C` to stop.
 
+---
+
 ## Step 7: Monitor and Debug
 
 ### 7.1 Check Logs
@@ -259,8 +313,8 @@ tail -f logs/agent_20240107.log
 # View errors only
 grep ERROR logs/agent_20240107.log
 
-# View TikTok uploads only
-grep "tiktok" logs/agent_20240107.log
+# View Polly TTS logs
+grep "Polly\|Audio generated" logs/agent_20240107.log
 ```
 
 ### 7.2 Check Output Videos
@@ -277,11 +331,14 @@ Each video file is named: `video_YYYYMMDD_HHMMSS.mp4`
 
 | Problem | Solution |
 |---------|----------|
-| **"API key invalid"** | Check `.env` has correct key |
-| **"No module named google"** | Run `pip install -r requirements.txt` again |
+| **"Unable to locate credentials"** | Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env or AWS CLI config |
+| **"InvalidParameterException"** | Text is invalid or too long - check article content |
+| **"AccessDenied"** | AWS credentials are wrong or don't have Polly permissions |
+| **"No module named boto3"** | Run `pip install -r requirements.txt` again |
 | **"ffmpeg not found"** | Install FFmpeg and add to PATH |
 | **"Permission denied"** | Make sure you have write access to the directory |
-| **"TLS certificate error"** | Update certificates: `pip install --upgrade certifi` |
+
+---
 
 ## Step 8: Set Up Continuous Running (Optional)
 
@@ -306,9 +363,11 @@ crontab -e
 0 9 * * * cd /path/to/news-video-agent && /path/to/venv/bin/python main.py once
 ```
 
+---
+
 ## Step 9: Upload to Social Media (Setup)
 
-### 9.1 Manual Upload
+### 9.1 Manual Upload (Easiest)
 
 For now, you can upload videos manually:
 
@@ -316,12 +375,16 @@ For now, you can upload videos manually:
 2. Download the latest `video_*.mp4`
 3. Upload to TikTok/WeChat manually
 
-### 9.2 Automated Upload
+### 9.2 Automated Upload (Advanced)
 
 Once you have proper API credentials:
 
-1. Add tokens to `.env`
-2. They will upload automatically
+1. Get TikTok API token from https://developer.tiktok.com
+2. Get WeChat token from https://mp.weixin.qq.com
+3. Add tokens to `.env`
+4. They will upload automatically
+
+---
 
 ## ✅ Setup Complete!
 
@@ -335,22 +398,54 @@ to generate your first videos!
 
 ---
 
+## 💡 Amazon Polly Voice Options
+
+Available British English voices:
+
+| Voice ID | Name | Gender | Quality |
+|----------|------|--------|---------|
+| **Amy** | Amy | Female | Neural (Best) |
+| **Brian** | Brian | Male | Neural (Best) |
+| **Emma** | Emma | Female | Standard |
+| **Arthur** | Arthur | Male | Neural (Very Good) |
+| **Olivia** | Olivia | Female | Neural (Excellent) |
+
+**Recommended**: `Amy` (default) - Professional British female voice
+
+To use a different voice, change `TTS_VOICE_ID` in `.env`
+
+---
+
 ## 📞 Troubleshooting Help
 
 If you encounter issues:
 
-1. **Check the error message** - Copy the exact error
+1. **Check AWS Credentials** - Ensure they're in `.env` or AWS CLI config
 2. **Check logs** - Look in `logs/` directory for details
-3. **Verify credentials** - Ensure all API keys are correct in `.env`
+3. **Verify AWS account** - Make sure Polly is available in your region
 4. **Test components** - Run individual tests from Step 5
 5. **Check GitHub Issues** - See if others had the same problem
+
+---
 
 ## 🎓 Learning Resources
 
 - **Python**: https://www.learnpython.org
-- **Google Cloud TTS**: https://cloud.google.com/text-to-speech/docs
+- **Amazon Polly**: https://aws.amazon.com/polly/
 - **NewsAPI**: https://newsapi.org/docs
+- **AWS CLI**: https://aws.amazon.com/cli/
 - **TikTok API**: https://developer.tiktok.com/doc/
 - **WeChat API**: https://developers.weixin.qq.com/doc
 
-Happy coding! 🚀
+---
+
+## 🚀 Next Steps
+
+1. ✅ Create AWS account
+2. ✅ Get credentials
+3. ✅ Follow this guide step-by-step
+4. ✅ Test with `python main.py test`
+5. ✅ Generate videos with `python main.py once`
+6. ✅ Deploy to run daily
+
+Happy coding! 🎬📱✨
